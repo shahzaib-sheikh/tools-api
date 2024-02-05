@@ -5,13 +5,14 @@ use rocket::request::FromRequest;
 use rocket::serde::json::Json;
 use rocket::serde::Serialize;
 use rocket::Request;
+use rocket_dyn_templates::{context, Template};
 
 #[macro_use]
 extern crate rocket;
 
 #[get("/")]
-fn index() -> &'static str {
-    "Hello, world!"
+fn index() -> Template {
+    Template::render("index", context! { field: "value" })
 }
 
 #[rocket::async_trait]
@@ -61,5 +62,7 @@ fn whoami(whoami: WhoamiResponse) -> Json<WhoamiResponse> {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index, whoami])
+    rocket::build()
+        .attach(Template::fairing())
+        .mount("/", routes![index, whoami])
 }
