@@ -22,7 +22,10 @@ impl<'r> FromRequest<'r> for WhoamiResponse {
         let mut headers: Map<String, String> = Map::new();
 
         for h in request.headers().iter() {
-            headers.insert(h.name().to_string(), h.value().to_string());
+            let header_name = h.name().to_string();
+            if !header_name.starts_with("x-") {
+                headers.insert(header_name, h.value().to_string());
+            }
         }
 
         let mut cookie_map: Map<String, String> = Map::new();
@@ -31,11 +34,14 @@ impl<'r> FromRequest<'r> for WhoamiResponse {
             cookie_map.insert(c.name().to_string(), c.value().to_string());
         }
 
-        let remote = request.remote();
         let default_ip: IpAddr = "127.0.0.1".parse().unwrap();
 
+        let remote_ip: IpAddr = headers
+            .get("x-real-ip")
+            .map_or(default_ip, |ip| ip.parse().unwrap());
+
         rocket::request::Outcome::Success(WhoamiResponse {
-            ip: remote.map_or(default_ip, |rem| rem.ip()).to_string(),
+            ip: remote_ip.to_string(),
             cookies: cookie_map,
             headers: headers,
         })
