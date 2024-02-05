@@ -37,8 +37,9 @@ impl<'r> FromRequest<'r> for WhoamiResponse {
 
         let default_ip: IpAddr = "127.0.0.1".parse().unwrap();
 
-        let remote_ip: IpAddr = headers
-            .get("x-real-ip")
+        let remote_ip: IpAddr = request
+            .headers()
+            .get_one("x-real-ip")
             .map_or(default_ip, |ip| ip.parse().unwrap());
 
         rocket::request::Outcome::Success(WhoamiResponse {
