@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+    use rand::Rng;
 
     #[test]
     fn test_uuid_generation() {
@@ -49,7 +50,7 @@ mod tests {
         
         let password: String = (0..10)
             .map(|_| {
-                let idx = rand::Rng::gen_range(&mut rng, 0..charset.len());
+                let idx = rng.gen_range(0..charset.len());
                 charset.chars().nth(idx).unwrap()
             })
             .collect();
@@ -67,7 +68,7 @@ mod tests {
         let mut result = Vec::new();
         
         for _ in 0..5 {
-            let word_index = rand::Rng::gen_range(&mut rng, 0..lorem_words.len());
+            let word_index = rng.gen_range(0..lorem_words.len());
             result.push(lorem_words[word_index]);
         }
         
@@ -143,7 +144,7 @@ mod tests {
     #[test]
     fn test_random_number_range() {
         let mut rng = rand::thread_rng();
-        let number = rand::Rng::gen_range(&mut rng, 1..=100);
+        let number = rng.gen_range(1..=100);
         assert!(number >= 1 && number <= 100);
     }
 

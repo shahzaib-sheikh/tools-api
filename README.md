@@ -1,4 +1,4 @@
-# StackFrost Developer Tools API
+# Developer Tools API (fun project)
 
 A comprehensive HTTP API providing essential developer tools and utilities. Built with Rust and Rocket for high performance and reliability.
 
@@ -10,8 +10,6 @@ A comprehensive HTTP API providing essential developer tools and utilities. Buil
 - **`/ip-info`** - Return IP with geolocation info (JSON)
 - **`/headers`** - Return all HTTP request headers
 - **`/user-agent`** - Return the User-Agent string
-- **`/trace/{host}`** - Run traceroute to specified host
-- **`/dns/{domain}`** - Perform DNS lookup for domain
 
 ### Data Processing & Encoding
 - **`/base64/{text}`** - Encode text to Base64
@@ -22,13 +20,12 @@ A comprehensive HTTP API providing essential developer tools and utilities. Buil
 
 ### Cryptography & Security
 - **`/jwt-decode/{token}`** - Decode JWT header & payload (no verification)
-- **`/generate-keypair/{algo}`** - Generate public/private keypair (rsa, ed25519, secp256k1)
 
 ### Generators & Utilities
 - **`/uuid`** - Generate random UUID v4
-- **`/lorem/{words}`** - Generate lorem ipsum text
+- **`/lorem/{words}`** - Generate lorem ipsum text (max 1000 words)
 - **`/color`** - Return random hex color code
-- **`/password/{length}`** - Generate random secure password
+- **`/password/{length}`** - Generate random secure password (max 128 characters)
 - **`/number/{min}/{max}`** - Generate random integer between min and max
 
 ### Time & Date
@@ -38,7 +35,7 @@ A comprehensive HTTP API providing essential developer tools and utilities. Buil
 
 ### Testing & Development
 - **`/echo`** - Echo back request method, query, body, and headers
-- **`/delay/{seconds}`** - Delay response by given seconds
+- **`/delay/{seconds}`** - Delay response by given seconds (max 30 seconds)
 - **`/status/{code}`** - Return given HTTP status code
 - **`/ping`** - Return "pong"
 
