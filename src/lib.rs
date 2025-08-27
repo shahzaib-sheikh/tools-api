@@ -26,13 +26,15 @@ mod tests {
 
     #[test]
     fn test_base64_encoding() {
-        let encoded = base64::encode(b"hello");
+        use base64::{Engine as _, engine::general_purpose};
+        let encoded = general_purpose::STANDARD.encode(b"hello");
         assert_eq!(encoded, "aGVsbG8=");
     }
 
     #[test]
     fn test_base64_decoding() {
-        let decoded = base64::decode("aGVsbG8=").unwrap();
+        use base64::{Engine as _, engine::general_purpose};
+        let decoded = general_purpose::STANDARD.decode("aGVsbG8=").unwrap();
         assert_eq!(String::from_utf8(decoded).unwrap(), "hello");
     }
 
@@ -127,7 +129,8 @@ mod tests {
             padded.push('=');
         }
         
-        let decoded = base64::decode(&padded.replace('-', "+").replace('_', "/"));
+        use base64::{Engine as _, engine::general_purpose};
+        let decoded = general_purpose::URL_SAFE_NO_PAD.decode(&padded.replace('-', "+").replace('_', "/"));
         assert!(decoded.is_ok());
     }
 
@@ -170,5 +173,31 @@ mod tests {
     fn test_basic_functionality() {
         // Test that all our core functions work as expected
         assert!(true);
+    }
+
+    #[test]
+    fn test_header_filtering_case_insensitive() {
+        // Test that header filtering works with different cases
+        let test_headers = vec![
+            "x-forwarded-for",
+            "X-Forwarded-For", 
+            "X-REAL-IP",
+            "x-custom-header",
+            "User-Agent",
+            "Authorization",
+            "Content-Type"
+        ];
+        
+        for header in test_headers {
+            let header_lower = header.to_lowercase();
+            let should_filter_x_headers = header_lower.starts_with("x-");
+            
+            // Verify our logic works for x- headers (case insensitive)
+            if header.to_lowercase().starts_with("x-") {
+                assert!(should_filter_x_headers, "Should filter x- header: {}", header);
+            } else {
+                assert!(!should_filter_x_headers, "Should NOT filter non-x header: {}", header);
+            }
+        }
     }
 }

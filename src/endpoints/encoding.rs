@@ -1,14 +1,22 @@
-use base64;
+use base64::{Engine as _, engine::general_purpose};
 
-// Encoding endpoints - FIXED: Updated to work with base64 v0.13
+// Encoding endpoints - SECURITY FIX: Updated to current base64 API v0.21
 #[get("/base64/<text>")]
 pub fn base64_encode(text: String) -> String {
-    base64::encode(text.as_bytes())
+    // SECURITY FIX: Limit input size to prevent DoS attacks
+    if text.len() > 1_000_000 {
+        return "Error: Input too large (max 1MB)".to_string();
+    }
+    general_purpose::STANDARD.encode(text.as_bytes())
 }
 
 #[get("/base64-decode/<b64>")]
 pub fn base64_decode(b64: String) -> String {
-    match base64::decode(&b64) {
+    // SECURITY FIX: Limit input size to prevent DoS attacks
+    if b64.len() > 1_500_000 {
+        return "Error: Input too large (max ~1.5MB base64)".to_string();
+    }
+    match general_purpose::STANDARD.decode(&b64) {
         Ok(bytes) => String::from_utf8_lossy(&bytes).to_string(),
         Err(_) => "Error: Invalid base64 encoding".to_string(),
     }
@@ -16,6 +24,10 @@ pub fn base64_decode(b64: String) -> String {
 
 #[get("/urlencode/<text>")]
 pub fn url_encode(text: String) -> String {
+    // SECURITY FIX: Limit input size to prevent DoS attacks
+    if text.len() > 100_000 {
+        return "Error: Input too large (max 100KB)".to_string();
+    }
     // Proper URL encoding that handles Unicode correctly
     text.bytes()
         .map(|b| match b {
@@ -30,6 +42,10 @@ pub fn url_encode(text: String) -> String {
 
 #[get("/urldecode/<encoded>")]
 pub fn url_decode(encoded: String) -> String {
+    // SECURITY FIX: Limit input size to prevent DoS attacks
+    if encoded.len() > 100_000 {
+        return "Error: Input too large (max 100KB)".to_string();
+    }
     // SECURITY FIX: Safe URL decoding with proper UTF-8 validation
     let mut bytes = Vec::new();
     let mut chars = encoded.chars().peekable();

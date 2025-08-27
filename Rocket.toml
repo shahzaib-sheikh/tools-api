@@ -2,3 +2,9 @@
 # SECURITY FIX: Bind to localhost only to prevent unintended network exposure
 address = "127.0.0.1"
 port = 8000
+
+[release]
+# SECURITY: Production should also bind to localhost by default
+# Change to 0.0.0.0 only if you need external access and have proper security measures
+address = "127.0.0.1"
+port = 8000

@@ -37,11 +37,11 @@ impl<'r> FromRequest<'r> for ClientIp {
     }
 }
 
-// Helper struct for getting all headers
+// Helper struct for getting all headers (used by general endpoints)
 #[derive(Debug)]
 pub struct AllHeaders(pub Map<String, String>);
 
-// List of sensitive headers that should not be exposed
+// List of sensitive headers that should not be exposed in general endpoints
 const SENSITIVE_HEADERS: &[&str] = &[
     "authorization",
     "cookie",
@@ -62,7 +62,7 @@ impl<'r> FromRequest<'r> for AllHeaders {
         
         for h in request.headers().iter() {
             let header_name = h.name().as_str().to_lowercase();
-            // SECURITY FIX: Filter out sensitive headers
+            // SECURITY: Filter out sensitive headers for general endpoints
             if !SENSITIVE_HEADERS.contains(&header_name.as_str()) {
                 headers_map.insert(h.name().to_string(), h.value().to_string());
             }
@@ -72,7 +72,7 @@ impl<'r> FromRequest<'r> for AllHeaders {
     }
 }
 
-// FromRequest implementation for WhoamiResponse
+// FromRequest implementation for WhoamiResponse (debugging endpoint - shows most headers)
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for WhoamiResponse {
     type Error = ();
@@ -81,8 +81,12 @@ impl<'r> FromRequest<'r> for WhoamiResponse {
         let mut headers: Map<String, String> = Map::new();
 
         for h in request.headers().iter() {
-            let header_name = h.name().to_string();
-            headers.insert(header_name, h.value().to_string());
+            let header_name = h.name().as_str().to_lowercase();
+            // SECURITY FIX: Filter out x- headers (proxy/infrastructure headers) for debugging clarity
+            // Keep standard headers visible for debugging purposes
+            if !header_name.starts_with("x-") {
+                headers.insert(h.name().to_string(), h.value().to_string());
+            }
         }
 
         let mut cookie_map: Map<String, String> = Map::new();
