@@ -1,69 +1,49 @@
-use std::net::IpAddr;
-
-use rocket::figment::value::Map;
-use rocket::request::FromRequest;
-use rocket::serde::json::Json;
-use rocket::serde::Serialize;
-use rocket::Request;
-use rocket_dyn_templates::{context, Template};
-
 #[macro_use]
 extern crate rocket;
 
-#[get("/")]
-fn index() -> Template {
-    Template::render("index", context! { field: "value" })
-}
+mod constants;
+mod endpoints;
+mod extractors;
+mod types;
 
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for WhoamiResponse {
-    type Error = ();
+use rocket_dyn_templates::Template;
 
-    async fn from_request(request: &'r Request<'_>) -> rocket::request::Outcome<Self, Self::Error> {
-        let mut headers: Map<String, String> = Map::new();
+use endpoints::{basic, crypto, encoding, fun, generators, time, utils};
 
-        for h in request.headers().iter() {
-            let header_name = h.name().to_string();
-            if !header_name.starts_with("x-") {
-                headers.insert(header_name, h.value().to_string());
-            }
-        }
-
-        let mut cookie_map: Map<String, String> = Map::new();
-
-        for c in request.cookies().iter() {
-            cookie_map.insert(c.name().to_string(), c.value().to_string());
-        }
-
-        let default_ip: IpAddr = "127.0.0.1".parse().unwrap();
-
-        let remote_ip: IpAddr = request
-            .headers()
-            .get_one("x-real-ip")
-            .map_or(default_ip, |ip| ip.parse().unwrap());
-
-        rocket::request::Outcome::Success(WhoamiResponse {
-            ip: remote_ip.to_string(),
-            cookies: cookie_map,
-            headers: headers,
-        })
-    }
-}
-
-#[derive(Serialize)]
-struct WhoamiResponse {
-    ip: String,
-    cookies: Map<String, String>,
-    headers: Map<String, String>,
-}
-#[get("/whoami")]
-fn whoami(whoami: WhoamiResponse) -> Json<WhoamiResponse> {
-    Json(whoami)
+pub fn create_rocket() -> rocket::Rocket<rocket::Build> {
+    rocket::build()
+        .attach(Template::fairing())
+        .mount("/", routes![
+            basic::index,
+            basic::whoami,
+            basic::ip,
+            basic::ip_info,
+            basic::headers,
+            basic::user_agent,
+            basic::echo,
+            basic::ping,
+            utils::delay,
+            utils::status_code,
+            generators::generate_uuid,
+            generators::lorem,
+            generators::random_color,
+            generators::generate_password,
+            generators::random_number,
+            encoding::base64_encode,
+            encoding::base64_decode,
+            encoding::url_encode,
+            encoding::url_decode,
+            crypto::hash,
+            time::timestamp,
+            time::time_utc,
+            time::time_tz,
+            crypto::jwt_decode,
+            fun::cat_fact,
+            fun::quote
+        ])
 }
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build()
-        .attach(Template::fairing())
-        .mount("/", routes![index, whoami])
+    create_rocket()
 }
