@@ -5,6 +5,7 @@ use rocket::serde::Serialize;
 #[derive(Serialize)]
 pub struct WhoamiResponse {
     pub ip: String,
+    pub country: Option<String>,
     pub cookies: Map<String, String>,
     pub headers: Map<String, String>,
 }
