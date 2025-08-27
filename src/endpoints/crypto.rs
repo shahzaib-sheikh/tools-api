@@ -22,14 +22,15 @@ pub fn hash(algo: String, text: String) -> String {
             hasher.update(text.as_bytes());
             format!("{:x}", hasher.finalize())
         }
-        _ => "Unsupported algorithm".to_string(),
+        _ => "Error: Unsupported hash algorithm (supported: md5, sha1, sha256)".to_string(),
     }
 }
 
 // JWT decode endpoint
 #[get("/jwt-decode/<token>")]
 pub fn jwt_decode(token: String) -> Json<Value> {
-    // Decode without verification (for demonstration purposes)
+    // SECURITY WARNING: This endpoint decodes JWT tokens for inspection only.
+    // It does NOT verify signatures or validate claims. Never use this for authentication!
     let parts: Vec<&str> = token.split('.').collect();
     
     if parts.len() != 3 {
@@ -51,10 +52,11 @@ pub fn jwt_decode(token: String) -> Json<Value> {
     match (decode_part(parts[0]), decode_part(parts[1])) {
         (Ok(header), Ok(payload)) => {
             Json(serde_json::json!({
+                "warning": "This is for inspection only - signature NOT verified!",
                 "header": header,
                 "payload": payload
             }))
         }
-        _ => Json(serde_json::json!({"error": "Failed to decode JWT"})),
+        _ => Json(serde_json::json!({"error": "Invalid JWT format or encoding"})),
     }
 }

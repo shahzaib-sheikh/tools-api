@@ -14,13 +14,24 @@ impl<'r> FromRequest<'r> for ClientIp {
     async fn from_request(request: &'r Request<'_>) -> rocket::request::Outcome<Self, Self::Error> {
         let default_ip: IpAddr = "127.0.0.1".parse().unwrap();
         
-        let client_ip = request
-            .headers()
-            .get_one("x-real-ip")
-            .or_else(|| request.headers().get_one("x-forwarded-for"))
-            .map_or(default_ip.to_string(), |ip| {
-                ip.split(',').next().unwrap_or(ip).trim().to_string()
-            });
+        // SECURITY FIX: Use Rocket's built-in remote address when available
+        // Only fall back to headers if behind a trusted proxy
+        let client_ip = if let Some(remote_addr) = request.remote() {
+            remote_addr.ip().to_string()
+        } else {
+            // Validate and sanitize proxy headers
+            let header_ip = request
+                .headers()
+                .get_one("x-forwarded-for")
+                .and_then(|ip| {
+                    // Take only the first IP from comma-separated list
+                    let first_ip = ip.split(',').next()?.trim();
+                    // Validate it's a proper IP address
+                    first_ip.parse::<IpAddr>().ok()?.to_string().into()
+                })
+                .unwrap_or_else(|| default_ip.to_string());
+            header_ip
+        };
         
         rocket::request::Outcome::Success(ClientIp(client_ip))
     }
@@ -30,6 +41,18 @@ impl<'r> FromRequest<'r> for ClientIp {
 #[derive(Debug)]
 pub struct AllHeaders(pub Map<String, String>);
 
+// List of sensitive headers that should not be exposed
+const SENSITIVE_HEADERS: &[&str] = &[
+    "authorization",
+    "cookie",
+    "set-cookie",
+    "x-api-key",
+    "x-auth-token",
+    "x-access-token",
+    "proxy-authorization",
+    "www-authenticate",
+];
+
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for AllHeaders {
     type Error = ();
@@ -38,7 +61,11 @@ impl<'r> FromRequest<'r> for AllHeaders {
         let mut headers_map: Map<String, String> = Map::new();
         
         for h in request.headers().iter() {
-            headers_map.insert(h.name().to_string(), h.value().to_string());
+            let header_name = h.name().as_str().to_lowercase();
+            // SECURITY FIX: Filter out sensitive headers
+            if !SENSITIVE_HEADERS.contains(&header_name.as_str()) {
+                headers_map.insert(h.name().to_string(), h.value().to_string());
+            }
         }
         
         rocket::request::Outcome::Success(AllHeaders(headers_map))
@@ -66,13 +93,22 @@ impl<'r> FromRequest<'r> for WhoamiResponse {
 
         let default_ip: IpAddr = "127.0.0.1".parse().unwrap();
 
-        let remote_ip: IpAddr = request
-            .headers()
-            .get_one("x-real-ip")
-            .or_else(|| request.headers().get_one("x-forwarded-for"))
-            .map_or(default_ip, |ip| {
-                ip.split(',').next().unwrap_or(ip).trim().parse().unwrap_or(default_ip)
-            });
+        // SECURITY FIX: Use same secure IP extraction logic
+        let remote_ip = if let Some(remote_addr) = request.remote() {
+            remote_addr.ip()
+        } else {
+            // Validate and sanitize proxy headers
+            request
+                .headers()
+                .get_one("x-forwarded-for")
+                .and_then(|ip| {
+                    // Take only the first IP from comma-separated list
+                    let first_ip = ip.split(',').next()?.trim();
+                    // Validate it's a proper IP address
+                    first_ip.parse::<IpAddr>().ok()
+                })
+                .unwrap_or(default_ip)
+        };
 
         rocket::request::Outcome::Success(WhoamiResponse {
             ip: remote_ip.to_string(),

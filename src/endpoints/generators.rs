@@ -55,6 +55,17 @@ pub fn generate_password(length: usize) -> String {
 
 #[get("/number/<min>/<max>")]
 pub fn random_number(min: i32, max: i32) -> String {
+    // SECURITY FIX: Validate input ranges to prevent panic
+    if min > max {
+        return "Error: min value cannot be greater than max value".to_string();
+    }
+    
+    // Prevent extreme ranges that could cause performance issues
+    let range_size = (max as i64) - (min as i64);
+    if range_size > 1_000_000_000 {
+        return "Error: range too large (max 1 billion)".to_string();
+    }
+    
     let mut rng = rand::thread_rng();
     rng.gen_range(min..=max).to_string()
 }

@@ -1,8 +1,7 @@
 # Developer Tools API (fun project)
 
-A comprehensive HTTP API providing essential developer tools and utilities. Built with Rust and Rocket for high performance and reliability.
+A comprehensive HTTP API providing essential developer tools and utilities. Built with Rust and Rocket for high performance and reliability. (not that it was needed)
 
-## 🚀 Features
 
 ### Network & IP Utilities
 - **`/whoami`** - Show IP address, headers, and cookies
@@ -74,79 +73,6 @@ Run the test suite:
 cargo test
 ```
 
-The project includes comprehensive unit tests for all core functionality including:
-- Hash functions (MD5, SHA1, SHA256)
-- Base64 encoding/decoding
-- URL encoding/decoding
-- UUID generation
-- Password generation
-- Time utilities
-- And more...
-
-## 📝 API Examples
-
-### Get your IP address
-```bash
-curl https://tools.stackfrost.com/ip
-```
-
-### Generate a UUID
-```bash
-curl https://tools.stackfrost.com/uuid
-```
-
-### Hash some text
-```bash
-curl https://tools.stackfrost.com/hash/sha256/hello
-```
-
-### Encode to Base64
-```bash
-curl https://tools.stackfrost.com/base64/hello%20world
-```
-
-### Generate a password
-```bash
-curl https://tools.stackfrost.com/password/16
-```
-
-### Get request info
-```bash
-curl https://tools.stackfrost.com/whoami
-```
-
-## 🏗️ Architecture
-
-- **Language**: Rust
-- **Framework**: Rocket 0.5
-- **Template Engine**: Handlebars
-- **Dependencies**: Minimal set focused on core functionality
-- **Performance**: Zero-copy where possible, minimal allocations
-
-## 🔧 Dependencies
-
-Core dependencies include:
-- `rocket` - Web framework
-- `serde` - Serialization/deserialization
-- `chrono` - Date and time handling
-- `uuid` - UUID generation
-- `base64` - Base64 encoding/decoding
-- `rand` - Random number generation
-- `sha1`, `sha2`, `md5` - Hash functions
-- `hex` - Hexadecimal encoding
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🌟 Similar Projects
-
-This API is inspired by services like httpbin.org and provides similar functionality optimized for developer workflows.

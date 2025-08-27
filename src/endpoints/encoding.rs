@@ -10,7 +10,7 @@ pub fn base64_encode(text: String) -> String {
 pub fn base64_decode(b64: String) -> String {
     match base64::decode(&b64) {
         Ok(bytes) => String::from_utf8_lossy(&bytes).to_string(),
-        Err(_) => "Invalid base64".to_string(),
+        Err(_) => "Error: Invalid base64 encoding".to_string(),
     }
 }
 
@@ -30,29 +30,32 @@ pub fn url_encode(text: String) -> String {
 
 #[get("/urldecode/<encoded>")]
 pub fn url_decode(encoded: String) -> String {
-    // Simple URL decoding implementation
-    let mut result = String::new();
+    // SECURITY FIX: Safe URL decoding with proper UTF-8 validation
+    let mut bytes = Vec::new();
     let mut chars = encoded.chars().peekable();
     
     while let Some(c) = chars.next() {
         if c == '%' {
             if let (Some(h1), Some(h2)) = (chars.next(), chars.next()) {
                 if let Ok(byte) = u8::from_str_radix(&format!("{}{}", h1, h2), 16) {
-                    result.push(byte as char);
+                    bytes.push(byte);
                 } else {
-                    result.push(c);
-                    result.push(h1);
-                    result.push(h2);
+                    // Invalid hex sequence, treat as literal characters
+                    bytes.extend_from_slice(c.to_string().as_bytes());
+                    bytes.extend_from_slice(h1.to_string().as_bytes());
+                    bytes.extend_from_slice(h2.to_string().as_bytes());
                 }
             } else {
-                result.push(c);
+                // Incomplete percent encoding, treat as literal
+                bytes.extend_from_slice(c.to_string().as_bytes());
             }
         } else if c == '+' {
-            result.push(' ');
+            bytes.push(b' ');
         } else {
-            result.push(c);
+            bytes.extend_from_slice(c.to_string().as_bytes());
         }
     }
     
-    result
+    // SECURITY FIX: Use from_utf8_lossy for safe UTF-8 conversion
+    String::from_utf8_lossy(&bytes).to_string()
 }

@@ -1,3 +1,4 @@
 [debug]
-address = "0.0.0.0"
+# SECURITY FIX: Bind to localhost only to prevent unintended network exposure
+address = "127.0.0.1"
 port = 8000
