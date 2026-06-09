@@ -25,3 +25,18 @@ pub static QUOTES: &[&str] = &[
     "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt",
     "It is during our darkest moments that we must focus to see the light. - Aristotle",
 ];
+
+pub static EIGHT_BALL: &[&str] = &[
+    "It is certain.",
+    "Without a doubt.",
+    "Yes, definitely.",
+    "Most likely.",
+    "Signs point to yes.",
+    "Reply hazy, try again.",
+    "Ask again later.",
+    "Cannot predict now.",
+    "Don't count on it.",
+    "My reply is no.",
+    "Very doubtful.",
+    "Outlook not so good.",
+];

@@ -4,196 +4,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tools - StackFrost</title>
-
+    <title>Tools · StackFrost</title>
+    <meta name="description" content="A small collection of developer utility endpoints — each usable as a web form or a JSON/text API.">
     <style>
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #21262d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #58a6ff;
+            --accent-soft: rgba(88, 166, 255, 0.12);
+            --ok: #3fb950;
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            margin: 0 auto;
-            font-family: Arial, Helvetica, sans-serif;
-            color: #444444;
-            line-height: 1;
-            max-width: 960px;
-            padding: 30px;
-        }
-
-        h1,
-        h2,
-        h3,
-        h4 {
-            color: #111111;
-            font-weight: 400;
-        }
-
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        p {
-            margin-bottom: 24px;
-            padding: 0;
-        }
-
-        h1 {
-            font-size: 48px;
-        }
-
-        h2 {
-            font-size: 36px;
-            margin: 24px 0 6px;
-        }
-
-        h3 {
-            font-size: 24px;
-        }
-
-        h4 {
-            font-size: 21px;
-        }
-
-        h5 {
-            font-size: 18px;
-        }
-
-        a {
-            color: #0099ff;
-            margin: 0;
-            padding: 0;
-            vertical-align: baseline;
-        }
-
-        ul,
-        ol {
-            padding: 0;
-            margin: 0;
-        }
-
-        li {
-            line-height: 24px;
-        }
-
-        li ul,
-        li ul {
-            margin-left: 24px;
-        }
-
-        p,
-        ul,
-        ol {
-            font-size: 16px;
-            line-height: 24px;
-            max-width: 540px;
-        }
-
-        pre {
-            padding: 0px 24px;
-            max-width: 800px;
-            white-space: pre-wrap;
-        }
-
-        code {
-            font-family: Consolas, Monaco, Andale Mono, monospace;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
             line-height: 1.5;
-            font-size: 13px;
+            -webkit-font-smoothing: antialiased;
+            padding: 40px 20px 80px;
         }
 
-        aside {
-            display: block;
-            float: right;
-            width: 390px;
+        .wrap { max-width: 1100px; margin: 0 auto; }
+
+        header.page { margin-bottom: 28px; }
+        header.page h1 { font-size: 2rem; letter-spacing: -0.02em; }
+        header.page p { color: var(--muted); margin-top: 8px; max-width: 70ch; }
+        header.page code { color: var(--accent); }
+
+        .controls { display: flex; gap: 12px; flex-wrap: wrap; margin: 22px 0 8px; }
+        #search {
+            flex: 1; min-width: 220px;
+            background: var(--panel); border: 1px solid var(--border);
+            color: var(--text); border-radius: var(--radius);
+            padding: 10px 14px; font-size: 0.95rem;
+        }
+        #search:focus { outline: none; border-color: var(--accent); }
+
+        .cat { margin-top: 34px; }
+        .cat h2 {
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.12em;
+            color: var(--muted); font-weight: 600; margin-bottom: 14px;
+            border-bottom: 1px solid var(--border); padding-bottom: 8px;
         }
 
-        blockquote {
-            margin: 1em 2em;
-            max-width: 476px;
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
 
-        blockquote p {
-            color: #666;
-            max-width: 460px;
+        .card {
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 16px;
+            display: flex; flex-direction: column; gap: 10px;
         }
+        .card h3 { font-size: 1rem; font-weight: 600; }
+        .card .desc { color: var(--muted); font-size: 0.85rem; }
+        .card .path { font-family: Consolas, Monaco, monospace; font-size: 0.78rem; color: var(--accent); word-break: break-all; }
 
-        hr {
-            width: 540px;
-            text-align: left;
-            margin: 0 auto 0 0;
-            color: #999;
+        .inputs { display: flex; flex-direction: column; gap: 8px; }
+        .inputs input {
+            background: var(--bg); border: 1px solid var(--border); color: var(--text);
+            border-radius: 8px; padding: 8px 10px; font-size: 0.88rem; width: 100%;
         }
+        .inputs input:focus { outline: none; border-color: var(--accent); }
 
-        table {
-            border-collapse: collapse;
-            margin: 1em 1em;
-            border: 1px solid #CCC;
+        .row { display: flex; gap: 8px; align-items: center; }
+        button.run {
+            background: var(--accent-soft); border: 1px solid var(--accent);
+            color: var(--accent); border-radius: 8px; padding: 8px 16px;
+            font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: background .15s;
         }
+        button.run:hover { background: var(--accent); color: #fff; }
+        a.apilink { color: var(--muted); font-size: 0.78rem; text-decoration: none; margin-left: auto; }
+        a.apilink:hover { color: var(--accent); text-decoration: underline; }
 
-        table thead {
-            background-color: #EEE;
+        .result {
+            display: none; background: var(--bg); border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px; font-family: Consolas, Monaco, monospace;
+            font-size: 0.8rem; white-space: pre-wrap; word-break: break-word; max-height: 280px; overflow: auto;
         }
+        .result.show { display: block; }
+        .result.err { border-color: #f85149; color: #ff7b72; }
+        .result svg { max-width: 220px; height: auto; background: #fff; border-radius: 6px; }
 
-        table thead td {
-            color: #666;
-        }
-
-        table td {
-            padding: 0.5em 1em;
-            border: 1px solid #CCC;
-        }
+        footer { margin-top: 60px; color: var(--muted); font-size: 0.8rem; text-align: center; }
+        footer a { color: var(--accent); text-decoration: none; }
     </style>
 </head>
 
 <body>
-    <h2>Tools</h2>
-    <ul>
-        <li>
-            <a href="/whoami"><strong>whoami</strong></a>
-            echo back IP, Headers &amp; cookies
-        </li>
-        <li>
-            <a href="/ip"><strong>ip</strong></a>
-            get your public IP address
-        </li>
-        <li>
-            <a href="/headers"><strong>headers</strong></a>
-            view all request headers
-        </li>
-        <li>
-            <a href="/uuid"><strong>uuid</strong></a>
-            generate random UUID
-        </li>
-        <li>
-            <a href="/base64/hello"><strong>base64/{text}</strong></a>
-            encode text to base64
-        </li>
-        <li>
-            <a href="/hash/sha256/hello"><strong>hash/{algo}/{text}</strong></a>
-            hash text (md5, sha1, sha256)
-        </li>
-        <li>
-            <a href="/password/16"><strong>password/{length}</strong></a>
-            generate secure password
-        </li>
-        <li>
-            <a href="/lorem/10"><strong>lorem/{words}</strong></a>
-            generate lorem ipsum text
-        </li>
-        <li>
-            <a href="/timestamp"><strong>timestamp</strong></a>
-            get current unix timestamp
-        </li>
-        <li>
-            <a href="/color"><strong>color</strong></a>
-            random hex color
-        </li>
-        <li>
-            <a href="/ping"><strong>ping</strong></a>
-            simple ping test
-        </li>
-        <li>
-            <a href="/cat-fact"><strong>cat-fact</strong></a>
-            random cat fact
-        </li>
-    </ul>
+    <div class="wrap">
+        <header class="page">
+            <h1>🛠️ Tools</h1>
+            <p>A small collection of developer utilities. Every tool works as a form below <em>and</em> as a plain
+                <code>GET</code> API — click <strong>API ↗</strong> on any card to hit the raw endpoint.</p>
+        </header>
 
+        <div class="controls">
+            <input id="search" type="search" placeholder="Filter tools… (e.g. base64, time, color)" autocomplete="off">
+        </div>
+
+        <div id="app"></div>
+
+        <footer>
+            <span id="count"></span> · built with Rust + Rocket ·
+            <a href="https://github.com/shahzaib-sheikh/tools-api">source</a>
+        </footer>
+    </div>
+
+    <script>
+        // Tool registry. Each tool: how to build its URL, its inputs, and how to render the response.
+        // kind: "json" | "text" | "svg"
+        const TOOLS = [
+            { cat: "Request", id: "whoami", name: "whoami", desc: "Your IP, headers & cookies", kind: "json", path: () => "/whoami" },
+            { cat: "Request", id: "ip", name: "ip", desc: "Your public IP address", kind: "text", path: () => "/ip" },
+            { cat: "Request", id: "headers", name: "headers", desc: "All request headers", kind: "json", path: () => "/headers" },
+            { cat: "Request", id: "ua", name: "user-agent", desc: "Your user agent string", kind: "text", path: () => "/user-agent" },
+            { cat: "Request", id: "ping", name: "ping", desc: "Health check → pong", kind: "text", path: () => "/ping" },
+
+            { cat: "Generators", id: "uuid", name: "uuid", desc: "Random UUID v4", kind: "text", path: () => "/uuid" },
+            { cat: "Generators", id: "pw", name: "password", desc: "Secure random password", kind: "text", inputs: [{ k: "length", ph: "length (1-128)", def: "20" }], path: v => `/password/${encodeURIComponent(v.length || 16)}` },
+            { cat: "Generators", id: "lorem", name: "lorem", desc: "Lorem ipsum words", kind: "text", inputs: [{ k: "words", ph: "word count (1-1000)", def: "20" }], path: v => `/lorem/${encodeURIComponent(v.words || 10)}` },
+            { cat: "Generators", id: "num", name: "number", desc: "Random number in range", kind: "text", inputs: [{ k: "min", ph: "min", def: "1" }, { k: "max", ph: "max", def: "100" }], path: v => `/number/${encodeURIComponent(v.min || 0)}/${encodeURIComponent(v.max || 100)}` },
+            { cat: "Generators", id: "color", name: "color", desc: "Random hex color", kind: "text", path: () => "/color" },
+
+            { cat: "Time", id: "ts", name: "timestamp", desc: "Current unix timestamp", kind: "json", path: () => "/timestamp" },
+            { cat: "Time", id: "ts2date", name: "timestamp → date", desc: "Unix timestamp to human date", kind: "json", inputs: [{ k: "unix", ph: "unix seconds or ms", def: "1781022640" }], path: v => `/timestamp/${encodeURIComponent(v.unix || 0)}` },
+            { cat: "Time", id: "utc", name: "time/utc", desc: "Current UTC time", kind: "json", path: () => "/time/utc" },
+            { cat: "Time", id: "tz", name: "time/{tz}", desc: "Time in an IANA timezone", kind: "json", inputs: [{ k: "tz", ph: "Asia/Dubai", def: "Asia/Dubai" }], path: v => `/time/${(v.tz || "UTC").split('/').map(encodeURIComponent).join('/')}` },
+            { cat: "Time", id: "dur", name: "duration", desc: "Humanize seconds → 1d 1h 1m", kind: "json", inputs: [{ k: "seconds", ph: "seconds", def: "90061" }], path: v => `/duration?seconds=${encodeURIComponent(v.seconds || 0)}` },
+
+            { cat: "Encoding", id: "b64e", name: "base64 encode", desc: "Text → base64", kind: "text", inputs: [{ k: "text", ph: "text", def: "hello world" }], path: v => `/base64/${encodeURIComponent(v.text || "")}` },
+            { cat: "Encoding", id: "b64d", name: "base64 decode", desc: "base64 → text", kind: "text", inputs: [{ k: "b64", ph: "base64", def: "aGVsbG8=" }], path: v => `/base64-decode/${encodeURIComponent(v.b64 || "")}` },
+            { cat: "Encoding", id: "b64ue", name: "base64url encode", desc: "URL-safe base64 (no padding)", kind: "text", inputs: [{ k: "text", ph: "text", def: "hello world" }], path: v => `/base64url/encode?text=${encodeURIComponent(v.text || "")}` },
+            { cat: "Encoding", id: "b64ud", name: "base64url decode", desc: "URL-safe base64 → text", kind: "text", inputs: [{ k: "input", ph: "base64url", def: "aGVsbG8gd29ybGQ" }], path: v => `/base64url/decode?input=${encodeURIComponent(v.input || "")}` },
+            { cat: "Encoding", id: "ue", name: "urlencode", desc: "Percent-encode text", kind: "text", inputs: [{ k: "text", ph: "text", def: "a b&c" }], path: v => `/urlencode/${encodeURIComponent(v.text || "")}` },
+            { cat: "Encoding", id: "ud", name: "urldecode", desc: "Decode percent-encoding", kind: "text", inputs: [{ k: "enc", ph: "encoded", def: "a%20b%26c" }], path: v => `/urldecode/${encodeURIComponent(v.enc || "")}` },
+            { cat: "Encoding", id: "hexe", name: "hex encode", desc: "Text → hex", kind: "text", inputs: [{ k: "text", ph: "text", def: "hi" }], path: v => `/hex/encode?text=${encodeURIComponent(v.text || "")}` },
+            { cat: "Encoding", id: "hexd", name: "hex decode", desc: "hex → text", kind: "text", inputs: [{ k: "input", ph: "hex", def: "6869" }], path: v => `/hex/decode?input=${encodeURIComponent(v.input || "")}` },
+            { cat: "Encoding", id: "rot13", name: "rot13", desc: "Caesar +13 (self-inverse)", kind: "text", inputs: [{ k: "text", ph: "text", def: "Hello" }], path: v => `/rot13?text=${encodeURIComponent(v.text || "")}` },
+            { cat: "Encoding", id: "htmle", name: "html encode", desc: "Escape HTML entities", kind: "text", inputs: [{ k: "text", ph: "<b>hi</b>", def: "<b>hi</b>" }], path: v => `/html/encode?text=${encodeURIComponent(v.text || "")}` },
+            { cat: "Encoding", id: "htmld", name: "html decode", desc: "Unescape HTML entities", kind: "text", inputs: [{ k: "text", ph: "&lt;b&gt;", def: "&lt;b&gt;hi&lt;/b&gt;" }], path: v => `/html/decode?text=${encodeURIComponent(v.text || "")}` },
+
+            { cat: "Crypto", id: "hash", name: "hash", desc: "md5 / sha1 / sha256", kind: "text", inputs: [{ k: "algo", ph: "md5|sha1|sha256", def: "sha256" }, { k: "text", ph: "text", def: "hello" }], path: v => `/hash/${encodeURIComponent(v.algo || "sha256")}/${encodeURIComponent(v.text || "")}` },
+            { cat: "Crypto", id: "jwt", name: "jwt-decode", desc: "Decode a JWT (no verify)", kind: "json", inputs: [{ k: "token", ph: "eyJ...", def: "" }], path: v => `/jwt-decode/${encodeURIComponent(v.token || "")}` },
+
+            { cat: "Text", id: "slug", name: "slugify", desc: "Make a URL slug", kind: "text", inputs: [{ k: "text", ph: "Hello World!", def: "Hello World!" }], path: v => `/text/slugify?text=${encodeURIComponent(v.text || "")}` },
+            { cat: "Text", id: "rev", name: "reverse", desc: "Reverse text", kind: "text", inputs: [{ k: "text", ph: "text", def: "stressed" }], path: v => `/text/reverse?text=${encodeURIComponent(v.text || "")}` },
+            { cat: "Text", id: "count", name: "count", desc: "Chars / words / lines", kind: "json", inputs: [{ k: "text", ph: "text", def: "the quick brown fox" }], path: v => `/text/count?text=${encodeURIComponent(v.text || "")}` },
+            { cat: "Text", id: "case", name: "case", desc: "upper/lower/title/snake/kebab/camel", kind: "text", inputs: [{ k: "mode", ph: "title", def: "title" }, { k: "text", ph: "text", def: "hello world" }], path: v => `/text/case/${encodeURIComponent(v.mode || "lower")}?text=${encodeURIComponent(v.text || "")}` },
+
+            { cat: "Convert", id: "base", name: "base convert", desc: "Number between bases 2-36", kind: "json", inputs: [{ k: "value", ph: "255", def: "255" }, { k: "from", ph: "from base", def: "10" }, { k: "to", ph: "to base", def: "16" }], path: v => `/base/convert?value=${encodeURIComponent(v.value || "0")}&from=${encodeURIComponent(v.from || 10)}&to=${encodeURIComponent(v.to || 16)}` },
+            { cat: "Convert", id: "h2r", name: "hex → rgb", desc: "Hex color to RGB", kind: "json", inputs: [{ k: "hex", ph: "ff8800", def: "ff8800" }], path: v => `/color/hex-to-rgb?hex=${encodeURIComponent(v.hex || "")}` },
+            { cat: "Convert", id: "r2h", name: "rgb → hex", desc: "RGB to hex color", kind: "json", inputs: [{ k: "r", ph: "r", def: "255" }, { k: "g", ph: "g", def: "136" }, { k: "b", ph: "b", def: "0" }], path: v => `/color/rgb-to-hex?r=${encodeURIComponent(v.r || 0)}&g=${encodeURIComponent(v.g || 0)}&b=${encodeURIComponent(v.b || 0)}` },
+
+            { cat: "Fun", id: "cat", name: "cat-fact", desc: "Random cat fact", kind: "text", path: () => "/cat-fact" },
+            { cat: "Fun", id: "quote", name: "quote", desc: "Random quote", kind: "text", path: () => "/quote" },
+            { cat: "Fun", id: "roll", name: "roll", desc: "Dice in NdM notation", kind: "json", inputs: [{ k: "dice", ph: "2d6", def: "2d6" }], path: v => `/roll/${encodeURIComponent(v.dice || "1d6")}` },
+            { cat: "Fun", id: "coin", name: "coinflip", desc: "Heads or tails", kind: "json", path: () => "/coinflip" },
+            { cat: "Fun", id: "8ball", name: "8ball", desc: "Magic 8-ball", kind: "json", path: () => "/8ball" },
+            { cat: "Fun", id: "pick", name: "pick", desc: "Random choice from a list", kind: "json", inputs: [{ k: "options", ph: "red,green,blue", def: "red,green,blue" }], path: v => `/pick?options=${encodeURIComponent(v.options || "")}` },
+
+            { cat: "QR", id: "qr", name: "qr", desc: "Generate an SVG QR code", kind: "svg", inputs: [{ k: "text", ph: "text or URL (max 1000)", def: "https://tools.stackfrost.com" }], path: v => `/qr?text=${encodeURIComponent(v.text || "")}` },
+        ];
+
+        const app = document.getElementById("app");
+        const cats = [...new Set(TOOLS.map(t => t.cat))];
+
+        function buildPath(tool) {
+            const vals = {};
+            (tool.inputs || []).forEach(inp => {
+                const el = document.getElementById(`in-${tool.id}-${inp.k}`);
+                vals[inp.k] = el ? el.value : "";
+            });
+            return tool.path(vals);
+        }
+
+        async function run(tool) {
+            const out = document.getElementById(`out-${tool.id}`);
+            const url = buildPath(tool);
+            out.className = "result show";
+            out.textContent = "…";
+            try {
+                const res = await fetch(url);
+                if (tool.kind === "svg") {
+                    const svg = await res.text();
+                    out.innerHTML = svg.trim().startsWith("<svg") ? svg : "";
+                    if (!out.innerHTML) { out.textContent = svg; out.classList.add("err"); }
+                    else { out.classList.remove("err"); }
+                    return;
+                }
+                const body = await res.text();
+                let rendered = body;
+                if (tool.kind === "json") {
+                    try { rendered = JSON.stringify(JSON.parse(body), null, 2); } catch (e) { /* leave raw */ }
+                }
+                out.textContent = rendered;
+                out.classList.toggle("err", !res.ok || /^Error:/.test(body) || /"error"/.test(body));
+            } catch (e) {
+                out.textContent = "Request failed: " + e.message;
+                out.classList.add("err");
+            }
+        }
+
+        cats.forEach(cat => {
+            const section = document.createElement("section");
+            section.className = "cat";
+            section.dataset.cat = cat;
+            section.innerHTML = `<h2>${cat}</h2>`;
+            const grid = document.createElement("div");
+            grid.className = "grid";
+
+            TOOLS.filter(t => t.cat === cat).forEach(tool => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.dataset.search = (tool.name + " " + tool.desc + " " + tool.cat).toLowerCase();
+
+                const inputsHtml = (tool.inputs || []).map(inp =>
+                    `<input id="in-${tool.id}-${inp.k}" placeholder="${inp.ph}" value="${inp.def ?? ""}">`
+                ).join("");
+
+                card.innerHTML =
+                    `<h3>${tool.name}</h3>
+                     <div class="desc">${tool.desc}</div>
+                     <div class="inputs">${inputsHtml}</div>
+                     <div class="row">
+                        <button class="run">Run</button>
+                        <a class="apilink" target="_blank">API ↗</a>
+                     </div>
+                     <div class="result" id="out-${tool.id}"></div>`;
+
+                const btn = card.querySelector("button.run");
+                const link = card.querySelector("a.apilink");
+                btn.addEventListener("click", () => run(tool));
+                const refreshLink = () => { link.href = buildPath(tool); };
+                refreshLink();
+                card.querySelectorAll("input").forEach(i => i.addEventListener("input", refreshLink));
+                card.querySelectorAll(".inputs input").forEach(i =>
+                    i.addEventListener("keydown", e => { if (e.key === "Enter") run(tool); }));
+
+                grid.appendChild(card);
+            });
+
+            section.appendChild(grid);
+            app.appendChild(section);
+        });
+
+        document.getElementById("count").textContent = TOOLS.length + " tools";
+
+        // Live filter
+        document.getElementById("search").addEventListener("input", e => {
+            const q = e.target.value.toLowerCase().trim();
+            document.querySelectorAll(".cat").forEach(sec => {
+                let visible = 0;
+                sec.querySelectorAll(".card").forEach(card => {
+                    const match = card.dataset.search.includes(q);
+                    card.style.display = match ? "" : "none";
+                    if (match) visible++;
+                });
+                sec.style.display = visible ? "" : "none";
+            });
+        });
+    </script>
 </body>
 
 </html>
