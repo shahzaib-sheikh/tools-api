@@ -198,7 +198,10 @@
                 return `${lbl}<select id="${id}">${opts}</select>`;
             }
             const t = inp.type === "number" ? "number" : "text";
-            return `${lbl}<input id="${id}" type="${t}" placeholder="${inp.label || ""}" value="${inp.def != null ? inp.def : ""}">`;
+            // NOTE: default value is set via JS (.value) after render, not as an
+            // attribute — otherwise entity defaults like "&lt;b&gt;" get decoded by
+            // the HTML parser and the demo input would be wrong.
+            return `${lbl}<input id="${id}" type="${t}" placeholder="${inp.label || ""}">`;
         }
 
         function makeGenericCard(tool) {
@@ -213,6 +216,13 @@
                     <button class="iconbtn copyurl" title="Copy API URL">⧉</button></div>
                  <div class="reswrap"><button class="iconbtn copyres" title="Copy result" style="display:none">📋</button>
                     <div class="result"></div></div>`;
+            // set defaults via JS so entity strings aren't decoded by the attribute parser
+            (tool.inputs || []).forEach(inp => {
+                if (inp.def != null && inp.type !== "select") {
+                    const e = card.querySelector(`#in-${tool.id}-${inp.k}`);
+                    if (e) e.value = inp.def;
+                }
+            });
             const link = card.querySelector(".apilink");
             const refresh = () => { const u = apiURL(tool); link.href = u; link.textContent = u.replace(location.origin, ""); };
             refresh();
@@ -226,7 +236,7 @@
         // ---------- codes (image output) ----------
         const QR_TYPES = {
             text: { label: "Text", fields: [{ k: "text", ph: "Any text" }], build: v => v.text || "" },
-            url: { label: "URL", fields: [{ k: "url", ph: "https://example.com" }], build: v => v.url || "" },
+            url: { label: "URL", fields: [{ k: "url", ph: "https://example.com" }], build: v => { const u = (v.url || "").trim(); return u && !/^[a-z][a-z0-9+.\-]*:\/\//i.test(u) ? "https://" + u : u; } },
             phone: { label: "Phone", fields: [{ k: "phone", ph: "+1 555 123 4567" }], build: v => "tel:" + (v.phone || "").replace(/\s+/g, "") },
             email: { label: "Email", fields: [{ k: "email", ph: "name@example.com" }, { k: "subject", ph: "subject (optional)" }, { k: "body", ph: "body (optional)" }], build: v => { let s = "mailto:" + (v.email || ""); const q = []; if (v.subject) q.push("subject=" + enc(v.subject)); if (v.body) q.push("body=" + enc(v.body)); return s + (q.length ? "?" + q.join("&") : ""); } },
             sms: { label: "SMS", fields: [{ k: "phone", ph: "+1 555 123 4567" }, { k: "message", ph: "message (optional)" }], build: v => "SMSTO:" + (v.phone || "").replace(/\s+/g, "") + ":" + (v.message || "") },
@@ -235,20 +245,35 @@
             vcard: { label: "Contact (vCard)", fields: [{ k: "name", ph: "Full name" }, { k: "phone", ph: "phone" }, { k: "email", ph: "email" }], build: v => `MECARD:N:${v.name || ""};TEL:${v.phone || ""};EMAIL:${v.email || ""};;` },
         };
 
-        function renderImageResult(card, url) {
+        async function renderImageResult(card, url, filename) {
             const wrap = card.querySelector(".reswrap");
             const out = card.querySelector(".result");
-            wrap.classList.add("show");
-            out.className = "result img";
-            out.innerHTML = "";
-            const img = el("img", { src: url, alt: "generated code" });
-            img.onerror = () => { out.className = "result err"; out.textContent = "Failed to render — check your input."; };
-            const dl = el("a", { class: "dl", href: url, download: "code.svg" }, "⬇ Download SVG");
-            out.appendChild(img);
-            out.appendChild(dl);
             const apiLink = card.querySelector(".apilink");
             apiLink.href = url; apiLink.textContent = url.replace(location.origin, "");
             card.querySelector(".copyurl").onclick = e => copy(url, e.currentTarget);
+            wrap.classList.add("show");
+            out.className = "result";
+            out.textContent = "…";
+            try {
+                const res = await fetch(url);
+                const ct = res.headers.get("content-type") || "";
+                if (res.ok && ct.includes("svg")) {
+                    const svg = await res.text();
+                    const blobUrl = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+                    out.className = "result img";
+                    out.innerHTML = "";
+                    out.appendChild(el("img", { src: blobUrl, alt: "generated code" }));
+                    out.appendChild(el("a", { class: "dl", href: url, download: filename || "code.svg" }, "⬇ Download SVG"));
+                } else {
+                    // surface the real server error (e.g. "invalid data for EAN-13")
+                    const body = await res.text();
+                    out.className = "result err";
+                    out.textContent = body || ("HTTP " + res.status);
+                }
+            } catch (e) {
+                out.className = "result err";
+                out.textContent = "Request failed: " + e.message;
+            }
         }
 
         function makeQRCard() {
@@ -285,7 +310,7 @@
             sel.addEventListener("change", () => { renderFields(); refresh(); bindFieldEvents(); });
             function bindFieldEvents() { fieldsBox.querySelectorAll("[data-k]").forEach(e => e.addEventListener("input", refresh)); }
             renderFields(); bindFieldEvents(); refresh();
-            card.querySelector(".run").addEventListener("click", () => renderImageResult(card, url()));
+            card.querySelector(".run").addEventListener("click", () => renderImageResult(card, url(), "qr.svg"));
             card.querySelector(".copyurl").addEventListener("click", e => copy(url(), e.currentTarget));
             return card;
         }
@@ -306,7 +331,7 @@
             const url = () => location.origin + `/barcode?text=${enc(txt.value)}&symbology=${enc(sym.value)}`;
             const refresh = () => { const u = url(); const a = card.querySelector(".apilink"); a.href = u; a.textContent = u.replace(location.origin, ""); };
             [sym, txt].forEach(e => e.addEventListener("input", refresh)); refresh();
-            card.querySelector(".run").addEventListener("click", () => renderImageResult(card, url()));
+            card.querySelector(".run").addEventListener("click", () => renderImageResult(card, url(), "barcode.svg"));
             card.querySelector(".copyurl").addEventListener("click", e => copy(url(), e.currentTarget));
             return card;
         }
@@ -325,7 +350,7 @@
             const url = () => location.origin + `/datamatrix?text=${enc(txt.value)}`;
             const refresh = () => { const u = url(); const a = card.querySelector(".apilink"); a.href = u; a.textContent = u.replace(location.origin, ""); };
             txt.addEventListener("input", refresh); refresh();
-            card.querySelector(".run").addEventListener("click", () => renderImageResult(card, url()));
+            card.querySelector(".run").addEventListener("click", () => renderImageResult(card, url(), "datamatrix.svg"));
             card.querySelector(".copyurl").addEventListener("click", e => copy(url(), e.currentTarget));
             return card;
         }
