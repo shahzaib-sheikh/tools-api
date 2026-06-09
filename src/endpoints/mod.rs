@@ -1,7 +1,10 @@
 pub mod basic;
+pub mod convert;
 pub mod crypto;
 pub mod encoding;
 pub mod fun;
 pub mod generators;
+pub mod qr;
+pub mod text;
 pub mod time;
 pub mod utils;

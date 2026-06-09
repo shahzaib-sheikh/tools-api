@@ -8,3 +8,12 @@ port = 8000
 # Change to 0.0.0.0 only if you need external access and have proper security measures
 address = "127.0.0.1"
 port = 8000
+
+# SECURITY: cap request body sizes so no endpoint can be used to exhaust memory.
+# (GET query inputs are additionally capped per-endpoint and by nginx URI limits.)
+[default.limits]
+forms = "32 kB"
+data-form = "256 kB"
+string = "256 kB"
+bytes = "256 kB"
+json = "256 kB"
