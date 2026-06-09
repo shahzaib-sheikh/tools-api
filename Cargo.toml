@@ -18,6 +18,8 @@ chrono = { version = "0.4", features = ["serde"] }
 chrono-tz = "0.8"
 hex = "0.4"
 qrcode = { version = "0.14", default-features = false, features = ["svg"] }
+barcoders = { version = "2.0", default-features = false, features = ["svg"] }
+datamatrix = "=0.3.2"
 
 [dependencies.rocket]
 version = "0.5.0-rc.1"

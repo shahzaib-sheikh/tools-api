@@ -61,6 +61,8 @@ pub fn create_rocket() -> rocket::Rocket<rocket::Build> {
             fun::eight_ball,
             fun::pick,
             qr::qr,
+            qr::barcode,
+            qr::data_matrix,
         ])
 }
 
@@ -329,5 +331,62 @@ mod route_tests {
         let enc = get_text("/base64url/encode?text=hello%20world").1;
         let dec = get_text(&format!("/base64url/decode?input={}", enc)).1;
         assert_eq!(dec, "hello world");
+    }
+
+    // ---- barcode / data matrix ----
+    fn assert_svg(path: &str) {
+        let c = client();
+        let res = c.get(path).dispatch();
+        assert_eq!(res.status(), Status::Ok, "status for {}", path);
+        assert_eq!(res.content_type(), Some(ContentType::SVG), "content-type for {}", path);
+        let body = res.into_string().unwrap();
+        assert!(body.contains("<svg"), "no <svg in {}", path);
+        assert!(body.contains("xmlns"), "no xmlns in {} (won't render as <img>)", path);
+    }
+
+    #[test]
+    fn barcode_code128_is_svg_with_xmlns() {
+        assert_svg("/barcode?text=ABC-123");
+    }
+
+    #[test]
+    fn barcode_code39_is_svg() {
+        assert_svg("/barcode?text=HELLO&symbology=code39");
+    }
+
+    #[test]
+    fn barcode_ean13_valid_is_svg() {
+        assert_svg("/barcode?text=123456789012&symbology=ean13");
+    }
+
+    #[test]
+    fn barcode_ean13_rejects_letters() {
+        let (_, b) = get_text("/barcode?text=abc&symbology=ean13");
+        assert!(b.starts_with("Error:"));
+    }
+
+    #[test]
+    fn barcode_unknown_symbology_errors() {
+        let (_, b) = get_text("/barcode?text=ABC&symbology=nope");
+        assert!(b.starts_with("Error:"));
+    }
+
+    #[test]
+    fn barcode_rejects_oversized_input() {
+        let big = "A".repeat(300);
+        let (_, b) = get_text(&format!("/barcode?text={}", big));
+        assert!(b.starts_with("Error:"));
+    }
+
+    #[test]
+    fn datamatrix_is_svg_with_xmlns() {
+        assert_svg("/datamatrix?text=Hello%20DM");
+    }
+
+    #[test]
+    fn datamatrix_rejects_oversized_input() {
+        let big = "A".repeat(600);
+        let (_, b) = get_text(&format!("/datamatrix?text={}", big));
+        assert!(b.starts_with("Error:"));
     }
 }
