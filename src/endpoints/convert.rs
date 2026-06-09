@@ -3,10 +3,21 @@ use rocket::serde::json::{serde_json, Json, Value};
 /// Convert an integer between bases 2..=36.
 /// `/base/convert?value=255&from=10&to=16` -> "ff"
 #[get("/base/convert?<value>&<from>&<to>")]
-pub fn base_convert(value: String, from: u32, to: u32) -> Json<Value> {
+pub fn base_convert(value: String, from: Option<String>, to: Option<String>) -> Json<Value> {
     if value.len() > 256 {
         return Json(serde_json::json!({"error": "input too large"}));
     }
+    let (from, to) = match (
+        from.as_deref().map(str::trim).map(str::parse::<u32>),
+        to.as_deref().map(str::trim).map(str::parse::<u32>),
+    ) {
+        (Some(Ok(f)), Some(Ok(t))) => (f, t),
+        _ => {
+            return Json(serde_json::json!({
+                "error": "provide from and to as integer bases, e.g. ?value=255&from=10&to=16"
+            }))
+        }
+    };
     if !(2..=36).contains(&from) || !(2..=36).contains(&to) {
         return Json(serde_json::json!({"error": "base must be between 2 and 36"}));
     }
@@ -63,12 +74,24 @@ pub fn hex_to_rgb(hex: String) -> Json<Value> {
 
 /// `/color/rgb-to-hex?r=255&g=136&b=0`
 #[get("/color/rgb-to-hex?<r>&<g>&<b>")]
-pub fn rgb_to_hex(r: u16, g: u16, b: u16) -> Json<Value> {
-    if r > 255 || g > 255 || b > 255 {
+pub fn rgb_to_hex(r: Option<String>, g: Option<String>, b: Option<String>) -> Json<Value> {
+    let parse = |o: Option<String>| -> Option<i64> {
+        o.as_deref().and_then(|s| s.trim().parse::<i64>().ok())
+    };
+    let (r, g, b) = match (parse(r), parse(g), parse(b)) {
+        (Some(r), Some(g), Some(b)) => (r, g, b),
+        _ => {
+            return Json(serde_json::json!({
+                "error": "provide r, g, b as integers, e.g. ?r=255&g=136&b=0"
+            }))
+        }
+    };
+    // Range-check explicitly so the message always fires (not swallowed by integer parsing).
+    if !(0..=255).contains(&r) || !(0..=255).contains(&g) || !(0..=255).contains(&b) {
         return Json(serde_json::json!({"error": "each channel must be 0-255"}));
     }
     Json(serde_json::json!({
-        "hex": format!("#{:02x}{:02x}{:02x}", r, g, b),
+        "hex": format!("#{:02x}{:02x}{:02x}", r as u8, g as u8, b as u8),
         "r": r, "g": g, "b": b,
     }))
 }

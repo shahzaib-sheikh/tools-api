@@ -293,4 +293,41 @@ mod route_tests {
         let (_, b) = get_text(&format!("/text/reverse?text={}", big));
         assert!(b.starts_with("Error:"));
     }
+
+    // ---- friendly errors for missing / invalid params ----
+    #[test]
+    fn duration_missing_param_is_friendly_json() {
+        let (s, v) = get_json("/duration");
+        assert_eq!(s, Status::Ok);
+        assert!(v["error"].is_string());
+    }
+
+    #[test]
+    fn timestamp_to_date_rejects_non_integer() {
+        let (_, v) = get_json("/timestamp/notanumber");
+        assert!(v["error"].is_string());
+    }
+
+    #[test]
+    fn base_convert_missing_bases_is_friendly() {
+        let (_, v) = get_json("/base/convert?value=255");
+        assert!(v["error"].is_string());
+    }
+
+    #[test]
+    fn rgb_invalid_and_out_of_range_both_error() {
+        // non-numeric
+        let (_, v1) = get_json("/color/rgb-to-hex?r=abc&g=0&b=0");
+        assert!(v1["error"].is_string());
+        // out of range still hits the explicit 0-255 message
+        let (_, v2) = get_json("/color/rgb-to-hex?r=300&g=0&b=0");
+        assert_eq!(v2["error"], "each channel must be 0-255");
+    }
+
+    #[test]
+    fn base64url_decode_roundtrip() {
+        let enc = get_text("/base64url/encode?text=hello%20world").1;
+        let dec = get_text(&format!("/base64url/decode?input={}", enc)).1;
+        assert_eq!(dec, "hello world");
+    }
 }

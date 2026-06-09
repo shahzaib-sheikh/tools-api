@@ -19,7 +19,11 @@ pub fn timestamp() -> Json<TimestampResponse> {
 /// Convert a unix timestamp to a human-readable date.
 /// `/timestamp/1781022640` -> formatted UTC + ISO8601. Auto-detects ms vs s.
 #[get("/timestamp/<unix>")]
-pub fn timestamp_to_date(unix: i64) -> Json<Value> {
+pub fn timestamp_to_date(unix: String) -> Json<Value> {
+    let unix: i64 = match unix.trim().parse() {
+        Ok(n) => n,
+        Err(_) => return Json(serde_json::json!({"error": "timestamp must be an integer"})),
+    };
     // Heuristic: values beyond ~year 5138 in seconds are almost certainly milliseconds.
     let (secs, unit) = if unix.abs() > 100_000_000_000 {
         (unix / 1000, "milliseconds")
@@ -71,7 +75,11 @@ pub fn time_tz(tz: PathBuf) -> Json<TimeResponse> {
 
 /// Humanize a duration in seconds. `/duration?seconds=90061` -> "1d 1h 1m 1s"
 #[get("/duration?<seconds>")]
-pub fn duration(seconds: i64) -> Json<Value> {
+pub fn duration(seconds: Option<String>) -> Json<Value> {
+    let seconds: i64 = match seconds.as_deref().map(str::trim).map(str::parse) {
+        Some(Ok(n)) => n,
+        _ => return Json(serde_json::json!({"error": "provide ?seconds=<integer>"})),
+    };
     let s = seconds.abs();
     let days = s / 86_400;
     let hours = (s % 86_400) / 3_600;
